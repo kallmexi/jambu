@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --accent: #000000;
+  --accent-foreground: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+  --glass-bg: rgba(0, 0, 0, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.text-glow {
+  /* Subtle glow for black/white theme */
+  text-shadow: 0 0 10px rgba(var(--foreground), 0.1);
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+[data-theme='light'] .animate-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.05),
+    transparent
+  );
+}
+
+[data-theme='ramadan'] {
+  --background: #0a1a10;
+  --foreground: #f3e5ab;
+  --accent: #f3e5ab;
+  --accent-foreground: #0a1a10;
+  --glass-bg: rgba(10, 26, 16, 0.85);
+  --glass-border: rgba(243, 229, 171, 0.15);
+}
+
+[data-theme='ramadan'] .grid-bg {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(243, 229, 171, 0.1) 1px, transparent 0);
+  background-size: 40px 40px;
+}
+
+[data-theme='ramadan'] .ramadan-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f3e5ab' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 30V15.01C6 6.72 12.72 0 21.01 0 29.3 0 36 6.72 36 15.01V30h-2V15.01c0-7.18-5.83-13-13-13-7.18 0-13 5.82-13 13V30H6zm30 0V15.01C36 6.72 42.72 0 51.01 0 59.3 0 66 6.72 66 15.01V30h-2V15.01c0-7.18-5.83-13-13-13-7.18 0-13 5.82-13 13V30h-2zM0 30h6v2h-6v-2zm66 0h6v2h-6v-2zM30 30h6v2h-6v-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme='ramadan'] .animate-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(243, 229, 171, 0.1),
+    transparent
+  );
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.grid-bg {
+  background-image: radial-gradient(circle at 1px 1px, var(--glass-border) 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
+  transform-origin: 0%;
+  z-index: 100;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
