@@ -1,14 +1,10 @@
 // components/LandingPage.tsx
 'use client';
 
-<<<<<<< HEAD
 import { useTheme } from '@/components/ThemeProvider';
 import { isRamadanPeriod } from '@/utils/themeUtils';
 import RamadanDashboard from '@/components/RamadanDashboard';
 import NotificationButton from '@/components/NotificationButton';
-=======
-import RamadanDashboard from '../components/RamadanDashboard'; 
->>>>>>> 08d7e4342679625329fe4fb8170fff9facac125c
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
