@@ -1,12 +1,31 @@
+// app/privacy/page.tsx (update - gunakan useTheme)
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { Shield, ArrowLeft } from 'lucide-react';
 import FloatingParticles from '@/components/FloatingParticles';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function PrivacyPage() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [theme, mounted]);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] p-6 md:p-20 overflow-hidden relative">
       <FloatingParticles />
@@ -30,9 +49,13 @@ export default function PrivacyPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex flex-col md:flex-row md:items-end gap-6 mb-16">
-            <div className="w-20 h-20 bg-black dark:bg-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="w-20 h-20 bg-black dark:bg-white rounded-[2rem] flex items-center justify-center shadow-2xl"
+            >
               <Shield className="w-10 h-10 text-white dark:text-black" />
-            </div>
+            </motion.div>
             <div>
               <div className="flex items-center gap-3 mb-2 opacity-40">
                 <div className="h-[1px] w-8 bg-current" />

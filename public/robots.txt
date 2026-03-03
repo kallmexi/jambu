@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://xyclanding.vercel.app/sitemap.xml

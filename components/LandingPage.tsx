@@ -1,19 +1,21 @@
 'use client';
 
+import { useTheme } from '@/components/ThemeProvider';
+import { isRamadanPeriod } from '@/utils/themeUtils';
+import RamadanDashboard from '@/components/RamadanDashboard';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Cpu, Zap, Monitor, Globe, Shield, 
-  Settings, X, Check, Languages, Palette, 
+import {
+  Cpu, Zap, Monitor, Globe, Shield,
+  Settings, X, Check, Languages, Palette,
   ChevronRight, Info, Heart, Bell, Calendar, Cookie,
   Loader2, AlertCircle, Clock, Moon, Star
 } from 'lucide-react';
 
 import { ASSETS } from '@/lib/assets';
 
-type Theme = 'light' | 'dark' | 'ramadan';
 type Language = 'en' | 'id' | 'ja' | 'ko' | 'fr' | 'es' | 'de' | 'zh' | 'ru' | 'ar' | 'ms';
 
 const translations: Record<Language, any> = {
@@ -514,20 +516,22 @@ const Skeleton = ({ className }: { className?: string }) => (
 );
 
 export default function LandingPage() {
-  const [theme, setTheme] = useState<Theme>('light');
+  const { theme, setTheme } = useTheme();
   const [lang, setLang] = useState<Language>('id');
 
+  // Auto-theme Ramadan hanya untuk pengunjung pertama kali
   useEffect(() => {
-    const savedTheme = localStorage.getItem('xy-theme') as Theme;
-    const savedLang = localStorage.getItem('xy-lang') as Language;
-    if (savedTheme) setTimeout(() => setTheme(savedTheme), 0);
-    if (savedLang) setTimeout(() => setLang(savedLang), 0);
-  }, []);
+    const savedTheme = localStorage.getItem('xy-theme');
+    if (!savedTheme) {
+      const autoTheme = isRamadanPeriod() ? 'ramadan' : 'light';
+      setTheme(autoTheme);
+    }
+  }, [setTheme]);
 
   useEffect(() => {
-    localStorage.setItem('xy-theme', theme);
     localStorage.setItem('xy-lang', lang);
-  }, [theme, lang]);
+  }, [lang]);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -539,6 +543,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const t = translations[lang];
 
@@ -550,9 +555,8 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
-    // Initialize audio
     audioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_c8c8a73456.mp3');
-    
+
     const hasLoaded = sessionStorage.getItem('xy-has-loaded');
     if (hasLoaded) {
       setTimeout(() => {
@@ -573,7 +577,7 @@ export default function LandingPage() {
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    
+
     const cookieAccepted = localStorage.getItem('cookieAccepted');
     if (!cookieAccepted) {
       const timer = setTimeout(() => {
@@ -589,7 +593,7 @@ export default function LandingPage() {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mousedown', handleClickOutside);
@@ -597,7 +601,6 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'ramadan') {
       const hasSeenGreeting = localStorage.getItem('xy-ramadan-greeting');
       if (!hasSeenGreeting) {
@@ -618,7 +621,6 @@ export default function LandingPage() {
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden">
-        {/* Blurred Background Layer */}
         <div className="absolute inset-0 z-0">
           <Image 
             src="https://picsum.photos/seed/xycloud-bg/1920/1080?blur=10" 
@@ -791,7 +793,9 @@ export default function LandingPage() {
             {['features', 'performance', 'pricing'].map((item) => (
               <a key={item} href={`#${item}`} className="hover:opacity-100 transition-opacity relative group">
                 {t[item as keyof typeof t]}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black dark:bg-white transition-all group-hover:w-full" />
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all group-hover:w-full ${
+                  theme === 'ramadan' ? 'bg-[#f3e5ab]' : 'bg-black dark:bg-white'
+                }`} />
               </a>
             ))}
           </div>
@@ -799,7 +803,11 @@ export default function LandingPage() {
           <div className="flex items-center gap-4 relative" ref={settingsRef}>
             <button 
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors opacity-60 hover:opacity-100"
+              className={`p-2 rounded-xl transition-colors opacity-60 hover:opacity-100 ${
+                theme === 'ramadan' 
+                  ? 'hover:bg-[#f3e5ab]/10' 
+                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -826,8 +834,14 @@ export default function LandingPage() {
                         ].map((item) => (
                           <button 
                             key={item.id}
-                            onClick={() => setTheme(item.id as Theme)}
-                            className={`p-3 rounded-2xl border transition-all flex items-center gap-3 ${theme === item.id ? 'border-black dark:border-white bg-black/5 dark:bg-white/5' : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5'}`}
+                            onClick={() => setTheme(item.id as any)}
+                            className={`p-3 rounded-2xl border transition-all flex items-center gap-3 ${
+                              theme === item.id 
+                                ? theme === 'ramadan' 
+                                  ? 'border-[#f3e5ab] bg-[#f3e5ab]/10 text-[#f3e5ab]' 
+                                  : 'border-black dark:border-white bg-black/5 dark:bg-white/5'
+                                : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5'
+                            }`}
                           >
                             <div className="opacity-40">{item.icon}</div>
                             <span className="text-[10px] font-bold uppercase tracking-widest">{item.name}</span>
@@ -846,7 +860,15 @@ export default function LandingPage() {
                           <button 
                             key={langCode}
                             onClick={() => setLang(langCode as Language)}
-                            className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${lang === langCode ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-60'}`}
+                            className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                              lang === langCode 
+                                ? theme === 'ramadan'
+                                  ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                                  : 'bg-black text-white dark:bg-white dark:text-black'
+                                : theme === 'ramadan'
+                                  ? 'hover:bg-[#f3e5ab]/10 opacity-60'
+                                  : 'hover:bg-black/5 dark:hover:bg-white/5 opacity-60'
+                            }`}
                           >
                             {langCode}
                           </button>
@@ -858,7 +880,11 @@ export default function LandingPage() {
               )}
             </AnimatePresence>
 
-            <button className="bg-black text-white dark:bg-white dark:text-black px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95">
+            <button className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 ${
+              theme === 'ramadan'
+                ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                : 'bg-black text-white dark:bg-white dark:text-black'
+            }`}>
               {t.getStarted}
             </button>
           </div>
@@ -908,14 +934,23 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsValidatingOpen(true)}
-                className="w-full sm:w-auto px-10 py-5 bg-black text-white dark:bg-white dark:text-black font-black rounded-2xl transition-all shadow-2xl uppercase tracking-widest text-xs animate-shimmer"
+                className={`w-full sm:w-auto px-10 py-5 font-black rounded-2xl transition-all shadow-2xl uppercase tracking-widest text-xs animate-shimmer ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}
               >
                 {t.startTrial}
               </motion.button>
               <motion.button 
-                whileHover={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsComingSoonOpen(true)}
-                className="w-full sm:w-auto px-10 py-5 glass font-black rounded-2xl transition-all uppercase tracking-widest text-xs"
+                className={`w-full sm:w-auto px-10 py-5 glass font-black rounded-2xl transition-all uppercase tracking-widest text-xs ${
+                  theme === 'ramadan'
+                    ? 'hover:bg-[#f3e5ab]/10'
+                    : 'hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
               >
                 {t.viewDemo}
               </motion.button>
@@ -979,7 +1014,9 @@ export default function LandingPage() {
               className="text-center group"
             >
               <div className="flex justify-center mb-4">
-                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg opacity-40 group-hover:opacity-100 transition-opacity">
+                <div className={`p-2 rounded-lg opacity-40 group-hover:opacity-100 transition-opacity ${
+                  theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+                }`}>
                   {stat.icon}
                 </div>
               </div>
@@ -1003,7 +1040,11 @@ export default function LandingPage() {
               className="md:col-span-2 md:row-span-2 glass rounded-[3rem] p-12 flex flex-col justify-between relative overflow-hidden group"
             >
               <div className="relative z-10">
-                <div className="w-12 h-12 bg-black text-white dark:bg-white dark:text-black rounded-2xl flex items-center justify-center mb-8">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-8 ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}>
                   {isSkeletonPhase ? <Loader2 className="w-6 h-6 animate-spin opacity-20" /> : <Cpu className="w-6 h-6" />}
                 </div>
                 <h3 className="font-display text-4xl font-black mb-4 tracking-tighter uppercase">
@@ -1020,9 +1061,13 @@ export default function LandingPage() {
 
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="md:col-span-2 glass rounded-[3rem] p-10 flex items-center gap-8 group"
+              className={`md:col-span-2 glass rounded-[3rem] p-10 flex items-center gap-8 group transition-colors ${
+                theme === 'ramadan' ? 'hover:bg-[#f3e5ab]/5' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
-              <div className="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-center shrink-0">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${
+                theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+              }`}>
                 <Globe className="w-8 h-8" />
               </div>
               <div>
@@ -1033,7 +1078,9 @@ export default function LandingPage() {
 
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="glass rounded-[3rem] p-10 flex flex-col justify-center text-center group"
+              className={`glass rounded-[3rem] p-10 flex flex-col justify-center text-center group transition-colors ${
+                theme === 'ramadan' ? 'hover:bg-[#f3e5ab]/5' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
               <Zap className="w-8 h-8 mx-auto mb-4 opacity-40" />
               <h3 className="font-display text-lg font-bold tracking-tight">5ms Latency</h3>
@@ -1041,7 +1088,9 @@ export default function LandingPage() {
 
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="glass rounded-[3rem] p-10 flex flex-col justify-center text-center group"
+              className={`glass rounded-[3rem] p-10 flex flex-col justify-center text-center group transition-colors ${
+                theme === 'ramadan' ? 'hover:bg-[#f3e5ab]/5' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
               <Monitor className="w-8 h-8 mx-auto mb-4 opacity-40" />
               <h3 className="font-display text-lg font-bold tracking-tight">8K Support</h3>
@@ -1049,7 +1098,9 @@ export default function LandingPage() {
 
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="md:col-span-2 glass rounded-[3rem] p-10 flex items-center justify-between group overflow-hidden relative"
+              className={`md:col-span-2 glass rounded-[3rem] p-10 flex items-center justify-between group overflow-hidden relative transition-colors ${
+                theme === 'ramadan' ? 'hover:bg-[#f3e5ab]/5' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
               <div className="relative z-10">
                 <h3 className="font-display text-2xl font-bold mb-2 tracking-tight">Cross-Platform</h3>
@@ -1060,9 +1111,13 @@ export default function LandingPage() {
 
             <motion.div 
               whileHover={{ scale: 1.02 }}
-              className="md:col-span-2 glass rounded-[3rem] p-10 flex items-center gap-6 group"
+              className={`md:col-span-2 glass rounded-[3rem] p-10 flex items-center gap-6 group transition-colors ${
+                theme === 'ramadan' ? 'hover:bg-[#f3e5ab]/5' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
             >
-              <div className="p-4 bg-black/5 dark:bg-white/5 rounded-2xl">
+              <div className={`p-4 rounded-2xl ${
+                theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+              }`}>
                 <Shield className="w-6 h-6" />
               </div>
               <div>
@@ -1126,7 +1181,9 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 whileHover={{ y: -10 }}
-                className="glass rounded-[3rem] border-black/5 dark:border-white/5 transition-all group relative overflow-hidden flex flex-col"
+                className={`glass rounded-[3rem] border-black/5 dark:border-white/5 transition-all group relative overflow-hidden flex flex-col ${
+                  theme === 'ramadan' ? 'hover:border-[#f3e5ab]/30' : ''
+                }`}
               >
                 <div className="relative h-48 overflow-hidden">
                   <Image 
@@ -1137,7 +1194,11 @@ export default function LandingPage() {
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-black to-transparent" />
-                  <div className="absolute bottom-6 left-10 p-4 bg-white/10 dark:bg-black/10 backdrop-blur-md rounded-2xl text-black dark:text-white border border-white/20 dark:border-black/20">
+                  <div className={`absolute bottom-6 left-10 p-4 backdrop-blur-md rounded-2xl border border-white/20 dark:border-black/20 ${
+                    theme === 'ramadan' 
+                      ? 'bg-[#f3e5ab]/10 text-[#f3e5ab]' 
+                      : 'bg-white/10 dark:bg-black/10 text-black dark:text-white'
+                  }`}>
                     {feature.icon}
                   </div>
                 </div>
@@ -1175,10 +1236,20 @@ export default function LandingPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className={`relative glass p-12 rounded-[3.5rem] border-black/5 dark:border-white/5 ${popular ? 'border-black/20 dark:border-white/20 bg-black/[0.02] dark:bg-white/[0.02] shadow-2xl' : ''}`}
+                  className={`relative glass p-12 rounded-[3.5rem] border-black/5 dark:border-white/5 ${
+                    popular 
+                      ? theme === 'ramadan'
+                        ? 'border-[#f3e5ab]/30 bg-[#f3e5ab]/5 shadow-2xl'
+                        : 'border-black/20 dark:border-white/20 bg-black/[0.02] dark:bg-white/[0.02] shadow-2xl'
+                      : ''
+                  }`}
                 >
                   {popular && (
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black text-white dark:bg-white dark:text-black text-[10px] font-black px-6 py-2 rounded-full uppercase tracking-[0.2em] shadow-xl">
+                    <div className={`absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-black px-6 py-2 rounded-full uppercase tracking-[0.2em] shadow-xl ${
+                      theme === 'ramadan'
+                        ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                        : 'bg-black text-white dark:bg-white dark:text-black'
+                    }`}>
                       Most Popular
                     </div>
                   )}
@@ -1201,7 +1272,15 @@ export default function LandingPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setIsComingSoonOpen(true)}
-                    className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all animate-shimmer ${popular ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xl' : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10'}`}
+                    className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all animate-shimmer ${
+                      popular
+                        ? theme === 'ramadan'
+                          ? 'bg-[#f3e5ab] text-[#0a1a10] shadow-2xl'
+                          : 'bg-black text-white dark:bg-white dark:text-black shadow-2xl'
+                        : theme === 'ramadan'
+                          ? 'bg-[#f3e5ab]/10 hover:bg-[#f3e5ab]/20 text-[#f3e5ab]'
+                          : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10'
+                    }`}
                   >
                     Select {plan.name}
                   </motion.button>
@@ -1249,7 +1328,11 @@ export default function LandingPage() {
                   { region: "Europe Central", status: "Operational", load: 55 },
                   { region: "Middle East", status: "Operational", load: 31 }
                 ].map((node, i) => (
-                  <div key={i} className="p-6 bg-black/5 dark:bg-white/5 rounded-3xl flex items-center justify-between group hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                  <div key={i} className={`p-6 rounded-3xl flex items-center justify-between group transition-all ${
+                    theme === 'ramadan'
+                      ? 'bg-[#f3e5ab]/5 hover:bg-[#f3e5ab]/10'
+                      : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10'
+                  }`}>
                     <div>
                       <div className="font-bold text-sm mb-1">{node.region}</div>
                       <div className="text-[10px] uppercase tracking-widest text-emerald-500 font-black">{node.status}</div>
@@ -1278,7 +1361,11 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start gap-20 mb-20">
             <div className="max-w-sm">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-black text-white dark:bg-white dark:text-black rounded-xl flex items-center justify-center">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}>
                   <Zap className="w-6 h-6 fill-current" />
                 </div>
                 <span className="font-display font-bold text-2xl tracking-tight">XYCLOUD</span>
@@ -1286,7 +1373,9 @@ export default function LandingPage() {
               <p className="opacity-30 text-sm leading-relaxed font-light mb-8">
                 {t.footerDesc}
               </p>
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-40 bg-black/5 dark:bg-white/5 w-fit px-4 py-2 rounded-full mb-4">
+              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-40 w-fit px-4 py-2 rounded-full mb-4 ${
+                theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+              }`}>
                 <Heart className="w-3 h-3 fill-current" />
                 {t.poweredBy}
               </div>
@@ -1300,28 +1389,52 @@ export default function LandingPage() {
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-widest mb-8">{t.platform}</h4>
                 <ul className="space-y-4 text-sm opacity-40 font-light">
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Download</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Web Player</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Mobile App</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">TV App</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Download</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Web Player</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Mobile App</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>TV App</a></li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-widest mb-8">{t.company}</h4>
                 <ul className="space-y-4 text-sm opacity-40 font-light">
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">About Us</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Careers</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Press Kit</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Contact</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>About Us</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Careers</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Press Kit</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Contact</a></li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-widest mb-8">{t.support}</h4>
                 <ul className="space-y-4 text-sm opacity-40 font-light">
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Help Center</a></li>
-                  <li><a href="/maintenance" className="hover:opacity-100 transition-opacity">Status</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">Community</a></li>
-                  <li><a href="#" className="hover:opacity-100 transition-opacity">API Docs</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Help Center</a></li>
+                  <li><a href="/maintenance" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Status</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>Community</a></li>
+                  <li><a href="#" className={`transition-opacity ${
+                    theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+                  }`}>API Docs</a></li>
                 </ul>
               </div>
             </div>
@@ -1332,9 +1445,15 @@ export default function LandingPage() {
               © 2026 XYCLOUD. ALL RIGHTS RESERVED.
             </div>
             <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest opacity-30">
-              <Link href="/privacy" className="hover:opacity-100 transition-opacity">{t.privacy}</Link>
-              <Link href="/terms" className="hover:opacity-100 transition-opacity">{t.terms}</Link>
-              <Link href="/cookies" className="hover:opacity-100 transition-opacity">{t.cookieSettings}</Link>
+              <Link href="/privacy" className={`transition-opacity ${
+                theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+              }`}>{t.privacy}</Link>
+              <Link href="/terms" className={`transition-opacity ${
+                theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+              }`}>{t.terms}</Link>
+              <Link href="/cookies" className={`transition-opacity ${
+                theme === 'ramadan' ? 'hover:text-[#f3e5ab]' : 'hover:opacity-100'
+              }`}>{t.cookieSettings}</Link>
             </div>
           </div>
         </div>
@@ -1351,7 +1470,9 @@ export default function LandingPage() {
           >
             <div className="glass p-6 rounded-3xl border-black/10 dark:border-white/10 shadow-2xl flex flex-col gap-4">
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl opacity-60">
+                <div className={`p-3 rounded-xl opacity-60 ${
+                  theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+                }`}>
                   <Info className="w-5 h-5" />
                 </div>
                 <p className="text-xs opacity-60 leading-relaxed">
@@ -1361,13 +1482,21 @@ export default function LandingPage() {
               <div className="flex gap-3">
                 <button 
                   onClick={acceptCookies}
-                  className="flex-1 py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all"
+                  className={`flex-1 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all ${
+                    theme === 'ramadan'
+                      ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                      : 'bg-black text-white dark:bg-white dark:text-black'
+                  }`}
                 >
                   {t.accept}
                 </button>
                 <button 
                   onClick={() => setIsDetailsModalOpen(true)}
-                  className="px-6 py-3 glass rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center gap-2"
+                  className={`px-6 py-3 glass rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${
+                    theme === 'ramadan'
+                      ? 'hover:bg-[#f3e5ab]/10'
+                      : 'hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
                 >
                   <Cookie className="w-3 h-3" />
                   Details
@@ -1445,11 +1574,15 @@ export default function LandingPage() {
               <div className="space-y-6 opacity-60 text-sm leading-relaxed font-light">
                 <p>We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic.</p>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-2xl">
+                  <div className={`flex items-center justify-between p-4 rounded-2xl ${
+                    theme === 'ramadan' ? 'bg-[#f3e5ab]/5' : 'bg-black/5 dark:bg-white/5'
+                  }`}>
                     <span className="font-bold uppercase tracking-widest text-[10px]">Essential</span>
                     <Check className="w-4 h-4" />
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-2xl">
+                  <div className={`flex items-center justify-between p-4 rounded-2xl ${
+                    theme === 'ramadan' ? 'bg-[#f3e5ab]/5' : 'bg-black/5 dark:bg-white/5'
+                  }`}>
                     <span className="font-bold uppercase tracking-widest text-[10px]">Analytics</span>
                     <div className="w-4 h-4 rounded-full border border-black/20 dark:border-white/20" />
                   </div>
@@ -1457,7 +1590,11 @@ export default function LandingPage() {
               </div>
               <button 
                 onClick={() => setIsDetailsModalOpen(false)}
-                className="w-full mt-10 py-5 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all"
+                className={`w-full mt-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}
               >
                 Close
               </button>
@@ -1483,14 +1620,20 @@ export default function LandingPage() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-md glass rounded-[3rem] p-12 text-center shadow-2xl border border-black/5 dark:border-white/5"
             >
-              <div className="w-20 h-20 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 ${
+                theme === 'ramadan' ? 'bg-[#f3e5ab]/10' : 'bg-black/5 dark:bg-white/5'
+              }`}>
                 <Clock className="w-10 h-10 opacity-40" />
               </div>
               <h2 className="font-display text-3xl font-black mb-4 tracking-tighter uppercase">Coming Soon</h2>
               <p className="opacity-40 text-sm font-light leading-relaxed mb-10">This feature is currently under development and will be available in the next major update of XYCLOUD 2026.</p>
               <button 
                 onClick={() => setIsComingSoonOpen(false)}
-                className="w-full py-5 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all"
+                className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}
               >
                 Got it
               </button>
@@ -1516,14 +1659,18 @@ export default function LandingPage() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-md glass rounded-[3rem] p-12 text-center shadow-2xl border border-black/5 dark:border-white/5"
             >
-              <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8">
+              <div className={`w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8`}>
                 <Check className="w-10 h-10 text-emerald-500" />
               </div>
               <h2 className="font-display text-3xl font-black mb-4 tracking-tighter uppercase">Validated</h2>
               <p className="opacity-40 text-sm font-light leading-relaxed mb-10">Your request has been successfully validated. You are now ready to experience the future of gaming.</p>
               <button 
                 onClick={() => setIsValidatingOpen(false)}
-                className="w-full py-5 bg-black text-white dark:bg-white dark:text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all"
+                className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-all ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}
               >
                 Continue
               </button>

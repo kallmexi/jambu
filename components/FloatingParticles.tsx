@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
+import { useTheme } from '@/components/ThemeProvider';
 
 const particles = [
   { size: 4, top: '10%', left: '20%', duration: 15, delay: 0 },
@@ -17,6 +18,13 @@ const particles = [
 ];
 
 export default function FloatingParticles() {
+  const { theme } = useTheme();
+
+  const getParticleColor = () => {
+    if (theme === 'ramadan') return 'text-[#f3e5ab]';
+    return 'text-black dark:text-white';
+  };
+
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {particles.map((p, i) => (
@@ -43,7 +51,7 @@ export default function FloatingParticles() {
             borderRadius: '50%',
             backgroundColor: 'currentColor',
           }}
-          className="text-black dark:text-white opacity-20 blur-[1px]"
+          className={`${getParticleColor()} opacity-20 blur-[1px]`}
         />
       ))}
     </div>

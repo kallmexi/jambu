@@ -1,14 +1,31 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Home, ChevronLeft, Search } from 'lucide-react';
-import { ASSETS } from '@/lib/assets';
+import { Home, ChevronLeft } from 'lucide-react';
 import FloatingParticles from '@/components/FloatingParticles';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function NotFound() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [theme, mounted]);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center overflow-hidden">
       <FloatingParticles />
@@ -20,11 +37,10 @@ export default function NotFound() {
         className="relative w-full max-w-2xl aspect-video mb-8 z-10"
       >
         <Image
-          src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6NnJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/UoeaPqYrimhaIrdCpV/giphy.gif"
+          src="/assets/gif/404.gif"
           alt="404 Not Found"
           fill
           className="object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-          referrerPolicy="no-referrer"
           unoptimized
         />
       </motion.div>

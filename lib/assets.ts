@@ -1,3 +1,4 @@
+// lib/assets.ts
 export const ASSETS = {
   images: {
     hero: "/assets/images/hero.svg",

@@ -1,3 +1,4 @@
+/* app/globals.css (tambahan animasi spin-slow) */
 @import "tailwindcss";
 
 @theme {
@@ -55,6 +56,11 @@
   100% { transform: translateX(100%); }
 }
 
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-shimmer {
   position: relative;
   overflow: hidden;
@@ -74,6 +80,10 @@
     transparent
   );
   animation: shimmer 2s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 
 [data-theme='light'] .animate-shimmer::after {
