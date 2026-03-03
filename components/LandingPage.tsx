@@ -1,5 +1,6 @@
 'use client';
 
+import RamadanDashboard from '../components/RamadanDashboard'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
