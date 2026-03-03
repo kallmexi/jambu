@@ -1,4 +1,4 @@
-// components/RamadanDashboard.tsx (updated with dynamic prayer times)
+// components/RamadanDashboard.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';

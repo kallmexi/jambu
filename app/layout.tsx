@@ -1,4 +1,4 @@
-// app/layout.tsx (update)
+// app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk, Cormorant_Garamond } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -19,12 +19,15 @@ const cormorant = Cormorant_Garamond({
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-serif',
 });
-<head>
-  <link rel="manifest" href="/manifest.json" />
-</head>
+
 export const metadata: Metadata = {
   title: 'XYCLOUD | Rhamadan',
   description: 'Experience high-performance gaming on any device with XYCLOUD Cloud Remote Desktop.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
+  manifest: '/manifest.json',
   openGraph: {
     title: 'XYCLOUD - Rhamadan',
     description: 'Main di mana saja, tanpa lag. Ubah perangkat apa pun menjadi rig gaming kelas atas.',
@@ -43,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'XYCLOUD - Cloud Gaming Platform',
+    title: 'XYCLOUD - CRhamadan',
     description: 'Main di mana saja, tanpa lag.',
     images: ['https://xyclanding.vercel.app/assets/images/og-banner.jpg'],
   },
@@ -52,6 +55,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${cormorant.variable}`}>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
+      </head>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
           {children}

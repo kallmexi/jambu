@@ -6,7 +6,7 @@ export const ASSETS = {
     feature2: "/assets/images/feature2.svg",
     feature3: "/assets/images/feature3.svg",
     mockup: "/assets/images/mockup.jpeg",
-    loading: "/assets/images/loading.gif",
+    loading: "/assets/images/loading.gif", // pastikan file ada, bisa juga "/assets/images/localimg.gif" jika tidak rename
     error404: "/assets/images/404.gif",
     maintenance: "/assets/images/maintenance.svg",
   },

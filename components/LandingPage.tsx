@@ -1,8 +1,10 @@
+// components/LandingPage.tsx
 'use client';
 
 import { useTheme } from '@/components/ThemeProvider';
 import { isRamadanPeriod } from '@/utils/themeUtils';
 import RamadanDashboard from '@/components/RamadanDashboard';
+import NotificationButton from '@/components/NotificationButton';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
@@ -515,11 +517,24 @@ const Skeleton = ({ className }: { className?: string }) => (
   <span className={`animate-shimmer bg-black/5 dark:bg-white/5 rounded-2xl inline-block ${className}`} />
 );
 
+interface PrayerTime {
+  name: string;
+  time: string;
+}
+
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [lang, setLang] = useState<Language>('id');
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([
+    { name: 'Imsak', time: '04:32' },
+    { name: 'Subuh', time: '04:42' },
+    { name: 'Dzuhur', time: '12:05' },
+    { name: 'Ashar', time: '15:12' },
+    { name: 'Maghrib', time: '18:08' },
+    { name: 'Isya', time: '19:17' }
+  ]);
+  const [loadingPrayer, setLoadingPrayer] = useState(true);
 
-  // Auto-theme Ramadan hanya untuk pengunjung pertama kali
   useEffect(() => {
     const savedTheme = localStorage.getItem('xy-theme');
     if (!savedTheme) {
@@ -532,6 +547,32 @@ export default function LandingPage() {
     localStorage.setItem('xy-lang', lang);
   }, [lang]);
 
+  useEffect(() => {
+    const fetchPrayerTimes = async () => {
+      try {
+        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=11');
+        const data = await response.json();
+        if (data.code === 200) {
+          const timings = data.data.timings;
+          const mapped: PrayerTime[] = [
+            { name: 'Imsak', time: timings.Imsak },
+            { name: 'Subuh', time: timings.Fajr },
+            { name: 'Dzuhur', time: timings.Dhuhr },
+            { name: 'Ashar', time: timings.Asr },
+            { name: 'Maghrib', time: timings.Maghrib },
+            { name: 'Isya', time: timings.Isha }
+          ];
+          setPrayerTimes(mapped);
+        }
+      } catch (error) {
+        console.error('Gagal mengambil jadwal sholat:', error);
+      } finally {
+        setLoadingPrayer(false);
+      }
+    };
+    fetchPrayerTimes();
+  }, []);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -541,9 +582,9 @@ export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSkeletonPhase, setIsSkeletonPhase] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const t = translations[lang];
 
@@ -623,7 +664,7 @@ export default function LandingPage() {
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image 
-            src="https://picsum.photos/seed/xycloud-bg/1920/1080?blur=10" 
+            src="https://picsum.photos/id/870/200/300?grayscale&blur=2" 
             alt="Loading Background" 
             fill 
             className="object-cover opacity-50 dark:opacity-20"
@@ -643,7 +684,7 @@ export default function LandingPage() {
             className="relative w-40 h-40 mb-12"
           >
             <Image 
-              src={theme === 'ramadan' ? ASSETS.icons.logo : ASSETS.images.loading} 
+              src={theme === 'ramadan' ? ASSETS.images.loading : ASSETS.icons.logo} 
               alt="Loading..." 
               fill 
               className={`object-contain ${theme === 'ramadan' ? 'animate-pulse brightness-150' : ''}`}
@@ -738,7 +779,7 @@ export default function LandingPage() {
       </AnimatePresence>
       
       {/* Ramadan Dashboard */}
-      {theme === 'ramadan' && <RamadanDashboard />}
+      {theme === 'ramadan' && <RamadanDashboard prayerTimes={prayerTimes} />}
 
       {/* Ramadan Lanterns */}
       {theme === 'ramadan' && (
@@ -812,6 +853,27 @@ export default function LandingPage() {
               <Settings className="w-5 h-5" />
             </button>
             
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl opacity-60 hover:opacity-100 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
+            <button className={`hidden lg:block px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 ${
+              theme === 'ramadan'
+                ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                : 'bg-black text-white dark:bg-white dark:text-black'
+            }`}>
+              {t.getStarted}
+            </button>
+            
             <AnimatePresence>
               {isSettingsOpen && (
                 <motion.div 
@@ -879,17 +941,43 @@ export default function LandingPage() {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            <button className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 ${
-              theme === 'ramadan'
-                ? 'bg-[#f3e5ab] text-[#0a1a10]'
-                : 'bg-black text-white dark:bg-white dark:text-black'
-            }`}>
-              {t.getStarted}
-            </button>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-24 left-0 right-0 z-40 lg:hidden"
+          >
+            <div className="glass mx-4 rounded-3xl p-6 shadow-2xl border border-black/5 dark:border-white/5">
+              <div className="flex flex-col gap-4">
+                {['features', 'performance', 'pricing'].map((item) => (
+                  <a
+                    key={item}
+                    href={`#${item}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-sm font-bold uppercase tracking-widest opacity-60 hover:opacity-100 py-3 px-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  >
+                    {t[item as keyof typeof t]}
+                  </a>
+                ))}
+                <button className={`w-full mt-2 py-4 rounded-xl text-xs font-black uppercase tracking-widest ${
+                  theme === 'ramadan'
+                    ? 'bg-[#f3e5ab] text-[#0a1a10]'
+                    : 'bg-black text-white dark:bg-white dark:text-black'
+                }`}>
+                  {t.getStarted}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section className="relative pt-48 pb-20 px-6 z-10">
@@ -1678,6 +1766,9 @@ export default function LandingPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Notification Button */}
+      <NotificationButton prayerTimes={prayerTimes} />
     </div>
   );
 }

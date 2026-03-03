@@ -1,4 +1,4 @@
-/* app/globals.css (tambahan animasi spin-slow) */
+/* app/globals.css */
 @import "tailwindcss";
 
 @theme {
@@ -41,7 +41,6 @@
 }
 
 .text-glow {
-  /* Subtle glow for black/white theme */
   text-shadow: 0 0 10px rgba(var(--foreground), 0.1);
 }
 
@@ -143,7 +142,6 @@
   z-index: 100;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }

@@ -1,4 +1,4 @@
-// app/privacy/page.tsx (update - gunakan useTheme)
+// app/privacy/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
